@@ -24,7 +24,6 @@ import 'helper/save_file_mobile_desktop.dart'
 if (dart.library.html) 'helper/save_file_web.dart' as helper;
 import 'package:flutter/material.dart';
 
-import 'menulist.dart';
 
 class MyHomePage extends StatefulWidget {
   final String user;
@@ -1337,11 +1336,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   var logo = preferences.getString('logo') ?? "";
                   var mcc = preferences.getString('mcc') ?? "";
                   var type = preferences.getString('type') ?? "";
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) =>menu(user: username, pass: password,main: main,logo:logo,mcc:mcc,type:type,),),
-                        (Route<dynamic> route) => false,
-                  );
+                  // Navigator.pushAndRemoveUntil(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) =>menu(user: username, pass: password,main: main,logo:logo,mcc:mcc,type:type,),),
+                  //       (Route<dynamic> route) => false,
+                  // );
                 },
               ):Container(),
               Divider(

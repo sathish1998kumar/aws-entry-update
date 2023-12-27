@@ -7,10 +7,7 @@ import 'dart:developer';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart'as http;
 
-import 'datatable.dart';
-import 'menulist.dart';
 import 'mmcdash.dart';
 
 // import 'new.dart';
@@ -33,64 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
   var dataa = [];
   @override
 
-  // List<Sathish_Class> sathish1 = [];
-  // insertrecord() async {
-  //   // var name1=name.text;
-  //   print(password.text);
-  //   var map = {"name": username.text, "pass": password.text,"action":"select"};
-  //   try {
-  //     Response response= await post(
-  //         Uri.parse("http://dev.igps.io/tuty/api/flutterapi.php"),
-  //         body:jsonEncode(map));
-  //
-  //     if(response.body=="Succussfully"){
-  //       final prefs = await SharedPreferences.getInstance();
-  //       prefs.setString('username', '${username.text}');
-  //       prefs.setString('password', '${password.text}');
-  //       prefs.setString('user', 'main');
-  //       // return 'saved';
-  //       var platformName = '';
-  //       var token = '';
-  //       token = (await FirebaseMessaging.instance.getToken())!;
-  //       setState(() {
-  //         token = token;
-  //         if (Platform.isAndroid) {
-  //           platformName = "android";
-  //         } else if (Platform.isIOS) {
-  //           platformName = "ios";
-  //         }
-  //       });
-  //
-  //       if(username.text!=""&&username.text!=null){
-  //         Map body_data={
-  //           "action":"fcm_token",
-  //           "op":"add",
-  //           "username":username.text,
-  //           "platform":platformName,
-  //           "token":token,
-  //         };
-  //         String url="http://dev.igps.io/http.php";
-  //         http.Response response=await http.post(Uri.parse(url),body: body_data);
-  //         log("token res : ${response.body}");
-  //
-  //       }
-  //       print("token : $token");
-  //       Navigator.pushReplacement(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => dashboard(user: '${username.text}',pass: '${password.text}')),
-  //       );
-  //       // prefs.setString('school2', 'asdasdas');
-  //     }
-  //     else{
-  //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-  //         content: Text("Invalid details..."),
-  //       ));
-  //     }
-  //
-  //   } catch (e) {
-  //     print(e);
-  //   }
-  // }
   var chee = 0;
   var devil;
   String? idval;
@@ -104,9 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // chee=0;
     late Response response1;
     // try {
-    var map1 = {"mobile": mobilenumber,"platform":'app'};
+    var map1 = {"mobile": mobilenumber,"action":'mmc_modify'};
     response1 = await post(
-        Uri.parse("http://dev.igps.io/swms/api/otp_alert.php"),
+        Uri.parse("http://dev.igps.io/aws_madurai/api/otp_alert.php"),
         body: (map1));
     if (response1.statusCode == 200) {
       devil = response1.body;
@@ -114,10 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
       // print(d==response1.body && d==" success");
       setState(() async {
         if (devil.trim() == 'success') {
-          print("sathish");
-          var response1 = await post(
-              Uri.parse("http://dev.igps.io/tuty/entry1/api/flutter_api.php"),
-              body: (map1));
           setState(() {
             chee = 1;
           });
@@ -146,9 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (devil.trim() == "success" || (phoneno.text != "")) {
       // print("hi${phoneno.text}");
       // print("hi${idval}");
-      var map111 = {"mobile": phoneno.text, "otp": idval ,"platform":'app'};
+      var map111 = {"mobile": phoneno.text, "otp": idval ,"action":'mmc_modify'};
       var response111 = await post(
-          Uri.parse("http://dev.igps.io/swms/api/otp_verify.php"),
+          Uri.parse("http://dev.igps.io/aws_madurai/api/otp_verify.php"),
           body: (map111));
       //
       print("kkkkk ${response111.body}");
@@ -159,69 +94,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ));
       } else {
         dat = jsonDecode(response111.body);
-        print("data: ${dat}");
         for (var dou in dat) {
-          print(dou["mobile"]);
-          // setState((){
           final prefs = await SharedPreferences.getInstance();
-          prefs.setString('username', '${dou["main_user"]}');
+          prefs.setString('username', 'MMC');
           prefs.setString('password', '${dou["mobile"]}');
-          prefs.setString('main_user', '${dou["main_user"]}');
-          prefs.setString('logo', '${dou["logo"]}');
-          prefs.setString('mcc', '${dou["mcc"]}');
-          prefs.setString('type', '${dou["type"]}');
+          prefs.setString('mcc', 'Vellakkal');
               print("ff${dou["main_user"]}");
-          // return 'saved';
-          if(dou["type"]=="admin") {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      menu(
-                          user: '${dou["main_user"]}',
-                          pass: '${dou["mobile"]}',
-                          main: '${dou["main_user"]}',
-                          logo: '${dou["logo"]}',
-                          mcc: dou["mcc"],
-                          type:dou["type"],
-                      )
-              ),
-            );
-          }else if(dou["type"]=="user"){
-            if(dou["main_user"].toString().toUpperCase()=="MMC"){
               Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
                         MyHomePage1(
-                            user: '${dou["main_user"]}',
+                            user: 'MMC',
                             pass: '${dou["mobile"]}',
-                            main: '${dou["main_user"]}',
-                            logo: '${dou["logo"]}',
-                            mcc: '${dou["mcc"]}',
-                            type: '${dou["type"]}'
-
+                            mcc: 'Vellakkal',
                         ),
-                  ));
-            }
-            else {
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        MyHomePage(
-                            user: '${dou["main_user"]}',
-                            pass: '${dou["mobile"]}',
-                            main: '${dou["main_user"]}',
-                            logo: '${dou["logo"]}',
-                            mcc: '${dou["mcc"]}',
-                            type: '${dou["type"]}'
-
-                        ),
-                  ));
-            }
-          }
-          // prefs.setString('school2', 'asdasdas');
+                  )
+              );
         }
       }
     }

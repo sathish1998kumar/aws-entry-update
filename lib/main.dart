@@ -1,6 +1,6 @@
 import 'package:aws/dashboard.dart';
 import 'package:aws/login.dart';
-import 'package:aws/menulist.dart';
+
 import 'package:aws/today.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -9,8 +9,6 @@ import 'dart:developer';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// import 'completed.dart';
-import 'dummy.dart';
 import 'mmcdash.dart';
 
 void main() {
@@ -63,14 +61,29 @@ class _MyHomepageState extends State<MyHomepage> {
   }
 
   Future<void> nextScreen() async {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            MyHomePage1(user: "MMC", pass:"12345",main:"MMC",logo:"mmc.png", mcc:"Vellakkal", type: "cat",),
-      ),
-    );
+    var mcc;
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    var username = preferences.getString('username') ?? "";
+    var password = preferences.getString('password') ?? "";
 
+    if (username == "avadi") {
+      mcc = "ALL";
+    } else {
+      mcc = preferences.getString('mcc') ?? "";
+    }
+
+    // print(username);
+    await Future.delayed(Duration(milliseconds: 1500), () {});
+    Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>username == ""
+                ? HomeScreen(): MyHomePage1(
+              user: username,
+              pass: password,
+              mcc: mcc,
+
+            )));
   }
 
   @override

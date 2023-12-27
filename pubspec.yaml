@@ -53,6 +53,7 @@ dependencies:
   custom_date_range_picker: ^1.0.10
   open_file: ^3.2.1
   dropdown_plus: ^0.0.9
+  flutter_slidable: ^2.0.0
 
 dependency_overrides:
   intl: ^0.18.0
