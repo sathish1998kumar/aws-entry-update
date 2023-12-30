@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:math' hide log;
 import 'dart:typed_data';
 import 'dart:ui';
@@ -13,24 +14,13 @@ import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
-import 'package:syncfusion_flutter_datagrid/datagrid.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:syncfusion_flutter_datagrid_export/export.dart';
 import 'package:dropdown_plus/dropdown_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 // import 'package:dropdown_textfield/dropdown_textfield.dart';
-import 'chart.dart';
-import 'consolidated.dart';
-import 'dart:developer';
-import 'login.dart';
-import 'package:syncfusion_flutter_core/theme.dart';
-import 'helper/save_file_mobile_desktop.dart'
-    if (dart.library.html) 'helper/save_file_web.dart' as helper;
-import 'package:flutter/material.dart';
 
-import 'settings.dart';
 
 class MyHomePage1 extends StatefulWidget {
   final String user;
@@ -53,7 +43,7 @@ var users = "";
 
 class _MyHomePage1State extends State<MyHomePage1> {
   bool abcd = false;
-  late EmployeeDataSource employeeDataSource;
+  // late EmployeeDataSource employeeDataSource;
   String selectedValuetype = "ALL";
   String dropdownValue = "ALL";
   late List<dynamic> data = [];
@@ -63,10 +53,17 @@ class _MyHomePage1State extends State<MyHomePage1> {
   String? idval;
   var _selectedDate = DateTime.now();
   var mccs;
+  bool search = false;
+
+  bool isSearchVisible = false;
   bool noflag = false;
+  String searchText = '';
   late SlidableController slidableController;
   TextEditingController weight_in = TextEditingController();
   TextEditingController weight_out = TextEditingController();
+  TextEditingController dateInput=TextEditingController();
+  TextEditingController dateOutput=TextEditingController();
+  TextEditingController order_controler = TextEditingController();
   void initState() {
     super.initState();
     getEmployeeData(_selectedDate, widget.mcc);
@@ -140,7 +137,7 @@ class _MyHomePage1State extends State<MyHomePage1> {
 
         return AlertDialog(
           title:
-              Text('Are You Want Delete ${item["vehicle_no"]} ${item['trip']}'),
+          Text('Are You Want Delete ${item["vehicle_no"]} ${item['trip']}'),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return Column(
@@ -156,15 +153,7 @@ class _MyHomePage1State extends State<MyHomePage1> {
                           setState(() {
                             idval = verificationCode;
                           });
-                          //   otpvalidate(verificationCode);
-                          // showDialog(
-                          //     context: context,
-                          //     builder: (context){
-                          //       return AlertDialog(
-                          //         title: Text("Verification Code"),
-                          //         content: Text('Code entered is $verificationCode'),
-                          //       );
-                          //     }
+
                         }),
                 ],
               );
@@ -221,7 +210,9 @@ class _MyHomePage1State extends State<MyHomePage1> {
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(SnackBar(
                                 content: Text("Deleted"),
+
                               ));
+                              getEmployeeData(_selectedDate, widget.mcc);
                             } else {
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(SnackBar(
@@ -270,46 +261,17 @@ class _MyHomePage1State extends State<MyHomePage1> {
       },
     );
   }
-
   void _showImageDialog1(BuildContext context, item) {
+    print(item['entry_dt'] != null ?item['entry_dt']:DateTime.now());
     weight_in.text = item["weight"]==null?'0':item["weight"];
-    weight_out.text = item["weight_out"]==null?"0":item["weight_out"];
-    DateTime initialDate = item['entry_dt'] != null ? DateFormat('dd-MM-yyyy').parse(item['entry_dt']) : DateTime.now();
-    TextEditingController dateController = TextEditingController(text: item['entry_dt'] ?? DateFormat('dd-MM-yyyy').format(DateTime.now()));
-    void _selectDate() async {
-      FocusScope.of(context).requestFocus(new FocusNode());
-      if (!mounted) return;
-      final DateTime? pickedDate = await showDatePicker(
-        context: context,
-        initialDate: initialDate,
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2025),
-      );
+    weight_out.text = item["weight_out"]==null?'0':item["weight_out"];
+    DateTime dateTime = DateTime.parse(item['entry_dt'] != null ?item['entry_dt']: (DateTime.now()).toString());
+    String formattedDate = DateFormat('dd-MM-yyyy hh:mm:ss a').format(dateTime);
+    dateInput.text=formattedDate;
+    DateTime dateTime1 = DateTime.parse(item['entry_out'] != null ?item['entry_out']: (DateTime.now()).toString());
+    String formattedDate1 = DateFormat('dd-MM-yyyy hh:mm:ss a').format(dateTime1);
+    dateOutput.text=formattedDate1;
 
-      if (pickedDate != null && mounted) {
-        final TimeOfDay? pickedTime = await showTimePicker(
-          context: context,
-          initialTime: TimeOfDay.now(),
-        );
-
-        if (pickedTime != null && mounted) {
-          final DateTime combinedDateTime = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-          String formattedDateTime = DateFormat('dd-MM-yyyy hh:mm a').format(combinedDateTime);
-          print("Formatted DateTime: $formattedDateTime"); // Debugging line
-
-          // Update the state if necessary
-          setState(() {
-            dateController.text = formattedDateTime;
-          });
-        }
-      }
-    }
     showDialog(
       context: context,
       builder: (context) {
@@ -358,13 +320,95 @@ class _MyHomePage1State extends State<MyHomePage1> {
                   children: [
                     SizedBox(
                       width: MediaQuery.of(context).size.width * 0.6,
-                      child: TextFormField(
-                        controller: dateController,
-
+                      child: TextField(
+                        controller: dateInput,
                         decoration: InputDecoration(
+                          suffix: Icon(Icons.calendar_today),
                           labelText: 'Date In',
                         ),
-                        onTap: _selectDate,
+                        onTap: () async {
+                          DateTime selectedDateTime = DateTime.now();
+                          final DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDateTime,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2025),
+                          );
+                          if (pickedDate != null && pickedDate != selectedDateTime) {
+                            final TimeOfDay? pickedTime = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.fromDateTime(selectedDateTime),
+                            );
+                            if (pickedTime != null) {
+                              setState(() {
+                                selectedDateTime = DateTime(
+                                  pickedDate.year,
+                                  pickedDate.month,
+                                  pickedDate.day,
+                                  pickedTime.hour,
+                                  pickedTime.minute,
+                                );
+                                String formattedDate = DateFormat('dd-MM-yyyy hh:mm:ss a').format(selectedDateTime);
+                                dateInput.text = formattedDate;
+                              });
+                            }
+                          }
+                          //   DateTime? pickedDate = await showDatePicker(
+                          //       context: context,
+                          //       initialDate: DateTime.now(),
+                          //       firstDate: DateTime(1950),
+                          //       lastDate: DateTime(2100));
+                          //   if (pickedDate != null) {
+                          //     String formattedDate = DateFormat('dd-MM-yyyy hh:mm a').format(pickedDate);
+                          //     setState(() {
+                          //       dateInput.text = formattedDate;
+                          //     });
+                          //   } else {
+                          //
+                          //   }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.6,
+                      child: TextField(
+                        controller: dateOutput,
+                        decoration: InputDecoration(
+                          suffix: Icon(Icons.calendar_today),
+                          labelText: 'Date Out',
+                        ),
+                        onTap: () async {
+                          DateTime selectedDateTime = DateTime.now();
+                          final DateTime? pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDateTime,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2025),
+                          );
+                          if (pickedDate != null && pickedDate != selectedDateTime) {
+                            final TimeOfDay? pickedTime = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.fromDateTime(selectedDateTime),
+                            );
+                            if (pickedTime != null) {
+                              setState(() {
+                                selectedDateTime = DateTime(
+                                  pickedDate.year,
+                                  pickedDate.month,
+                                  pickedDate.day,
+                                  pickedTime.hour,
+                                  pickedTime.minute,
+                                );
+                                String formattedDate = DateFormat('dd-MM-yyyy hh:mm:ss a').format(selectedDateTime);
+                                dateOutput.text = formattedDate;
+                              });
+                            }
+                          }
+                          },
                       ),
                     ),
                   ],
@@ -379,10 +423,43 @@ class _MyHomePage1State extends State<MyHomePage1> {
             ),
             TextButton(
               child: Text('OK'),
-              onPressed: () {
-                print(dateController.text);
-                // Use _controller.text to get the value of the input
-                // print("Input value: ${weight_in.text}");
+              onPressed: () async {
+                print("ddd${convertDateFormat(dateInput.text)}");
+                print("ddd${(dateInput.text)}");
+                var map111 = {
+                  "sno": item["sno"],
+                  "imei": item["imei"],
+                  "rfid": item["rf_id"],
+                  "json": jsonEncode(item),
+                  "mobile": widget.pass,
+                  "weight_in": weight_in.text,
+                  "weight_out": weight_out.text,
+                  "entry_in":convertDateFormat(dateInput.text),
+                  "entry_out": convertDateFormat(dateOutput.text),
+                  "action": "update"
+                };
+                String url =
+                    "http://dev.igps.io/aws_madurai/api/getrf_api.php";
+                // print(map111);
+                var response = await http.post(Uri.parse(url),
+                    body: (jsonEncode(map111)));
+                log(response.body);
+                if (response.statusCode == 200) {
+                  setState(() {
+                    if (response.body.contains("updated")) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(
+                        content: Text("Updated"),
+                      ));
+                      getEmployeeData(_selectedDate, widget.mcc);
+                    } else {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(
+                        content: Text("Not Updated"),
+                      ));
+                    }
+                  });
+                }
                 Navigator.of(context).pop();
               },
             ),
@@ -397,7 +474,19 @@ class _MyHomePage1State extends State<MyHomePage1> {
       getEmployeeData(_selectedDate, widget.mcc);
     });
   }
+  String convertDateFormat(String dateString) {
+    // Define the input format
+    DateFormat inputFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
 
+    // Parse the date string into a DateTime object
+    DateTime dateTime = inputFormat.parse(dateString);
+
+    // Define the output format
+    DateFormat outputFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+    // Format the DateTime object into the desired string format
+    return outputFormat.format(dateTime);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -406,6 +495,76 @@ class _MyHomePage1State extends State<MyHomePage1> {
         title: (widget.user == "tuty" || widget.user.toUpperCase() == "MMC")
             ? Text("AWS  (${mcname})")
             : Text("AWS"),
+        actions: [
+          Row(
+            children: [
+              search
+                  ? Container(
+                padding: const EdgeInsets.fromLTRB(0, 0, 5.0, 0),
+                width: MediaQuery.of(context).size.width * 0.25,
+                height: MediaQuery.of(context).size.height * 0.05,
+                color: Colors.white,
+
+                child: TextFormField(
+                  decoration: InputDecoration(
+                      labelText: isSearchVisible == false ? 'Search' : "",
+                      labelStyle: TextStyle(color: Colors.black)),
+                  controller: order_controler,
+                  onTap: () {
+                    isSearchVisible = true;
+                  },
+                  onChanged: (value) {
+                    searchText = value;
+                    // Update the filtered data based on search query
+                    setState(() {
+                      if (value.isEmpty) {
+                        employees = data
+                            .map((e) => Employee.fromJson(e))
+                            .toList();
+
+                        // datas1=filteredData;
+                      } else {
+                        employees = data
+                            .where((element) =>
+                        element['vehicle_no']
+                            .toLowerCase()
+                            .contains(value.toLowerCase()) ||
+                            element['vehicle_no']
+                                .toString()
+                                .contains(value))
+                            .map((e) => Employee.fromJson(e))
+                            .toList();
+                        if (employees.isEmpty) {
+                          noflag = true;
+                        }
+                        print("go${employees}");
+                        // datas1=filteredData;
+                      }
+                    });
+                  },
+                ),
+              )
+                  : SizedBox.shrink(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 0, 10.0, 0),
+                child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        isSearchVisible = false;
+                        // print("dfdff");
+                        search = !search;
+                        if (search) {
+                        } else {
+
+                          order_controler.text = "";
+                        }
+                      });
+                    },
+                    icon: Icon(Icons.search)),
+              ),
+            ],
+          ),
+        ],
       ),
       drawer: Drawer(
         elevation: 16.0,
@@ -465,23 +624,23 @@ class _MyHomePage1State extends State<MyHomePage1> {
                         return AlertDialog(
                           title: const Text('Logout'),
                           content:
-                              const Text('Are You Want Confirm to Logout ..'),
+                          const Text('Are You Want Confirm to Logout ..'),
                           actions: <Widget>[
                             ElevatedButton(
                               onPressed: () async {
                                 SharedPreferences prefrences =
-                                    await SharedPreferences.getInstance();
+                                await SharedPreferences.getInstance();
                                 await prefrences.remove("username");
                                 await prefrences.remove("password");
 
                                 await prefrences.remove("mcc");
 
                                 // await prefrences.remove("location");
-                                Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => HomeScreen(),
-                                    ));
+                                // Navigator.pushReplacement(
+                                //     context,
+                                //     MaterialPageRoute(
+                                //       // builder: (context) => HomeScreen(),
+                                //     ));
                               },
                               child: const Text('OK'),
                             ),
@@ -508,182 +667,151 @@ class _MyHomePage1State extends State<MyHomePage1> {
         children: [
           RefreshIndicator(
             onRefresh: refresh,
-            child: data.isNotEmpty
+            child: employees.isNotEmpty
                 ? Container(
-                    width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height,
-                    child: ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        final item = data[index];
-                        return Padding(
-                          padding:  EdgeInsets.symmetric(
-                              vertical: 2.0, horizontal: 5.0),
-                          child: Slidable(
-                            key: Key(item.toString()),
-                            endActionPane: ActionPane(
-                              motion: ScrollMotion(),
-                              children: [
-                                SlidableAction(
-                                  // An action can be bigger than the others.
-                                  // flex: 2,
-                                  onPressed: (BuildContext context) {
-                                    if (toggle == 0) {
-                                      sendotp();
-                                    }
-                                    _showImageDialog(context, item);
-                                  },
-                                  backgroundColor: Color(0xFF7BC043),
-                                  foregroundColor: Colors.white,
-                                  icon: Icons.delete,
-                                  label: 'Delete',
-                                ),
-                                SlidableAction(
-                                  onPressed: (BuildContext context) {
-                                    if (toggle == 0) {
-                                      sendotp();
-                                    }
-                                    _showImageDialog1(context, item);
-                                  },
-                                  backgroundColor: Color(0xFF0392CF),
-                                  foregroundColor: Colors.white,
-                                  icon: Icons.update,
-                                  label: 'Update',
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              child: ListView.builder(
+                itemCount: data.length,
+                itemBuilder: (context, index) {
+                  final item = data[index];
+                  return Padding(
+                    padding:  EdgeInsets.symmetric(
+                        vertical: 2.0, horizontal: 5.0),
+                    child: Slidable(
+                      key: Key(item.toString()),
+                      endActionPane: ActionPane(
+                        motion: ScrollMotion(),
+                        children: [
+                          SlidableAction(
+                            // An action can be bigger than the others.
+                            // flex: 2,
+                            onPressed: (BuildContext context) {
+                              if (toggle == 0) {
+                                sendotp();
+                              }
+                              _showImageDialog(context, item);
+                            },
+                            backgroundColor: Color(0xFF7BC043),
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: 'Delete',
+                          ),
+                          SlidableAction(
+                            onPressed: (BuildContext context) {
+                              if (toggle == 0) {
+                                sendotp();
+                              }
+                              _showImageDialog1(context, item);
+                            },
+                            backgroundColor: Color(0xFF0392CF),
+                            foregroundColor: Colors.white,
+                            icon: Icons.update,
+                            label: 'Update',
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          height: 70,
+                          color: Colors.white,
+                          child: Row(
+                            // mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              // Container for the index
+                              Container(
+                                color: Colors.red,
+                                width: 70,
                                 height: 70,
-                                color: Colors.white,
-                                child: Row(
-                                  // mainAxisAlignment: MainAxisAlignment.center,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  (data.length - (index)).toString(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              // Main content
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
-                                    // Container for the index
-                                    Container(
-                                      color: Colors.red,
-                                      width: 70,
-                                      height: 70,
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        (data.length - (index)).toString(),
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
+                                    Text('${item["vehicle_no"]}',
+                                        style: const TextStyle(
+                                            color: Colors.blueAccent,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18)),
+                                    Row(
+                                      // mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          '${item["trip"]}',
+                                          style: const TextStyle(
+                                              color: Colors.blueAccent,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18),
                                         ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    // Main content
-                                    Expanded(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text('${item["vehicle_no"]}',
-                                              style: const TextStyle(
-                                                  color: Colors.blueAccent,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18)),
-                                          Row(
-                                            // mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                '${item["trip"]}',
-                                                style: const TextStyle(
-                                                    color: Colors.blueAccent,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 18),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(left: 8.0),
-                                                child: Container(
-                                                  padding:  EdgeInsets.all(6.0),
-                                                  decoration: BoxDecoration(
-                                                    color: item["weight"] != null && item['weight_out'] != null ? Colors.green[100] : Colors.red[100],
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: Icon(
-                                                    item["weight"] != null && item['weight_out'] != null ? Icons.check : Icons.close,
-                                                    color: item["weight"] != null && item['weight_out'] != null ? Colors.green : Colors.red,
-                                                    size: 24.0, // Increased size
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 8.0),
+                                          child: Container(
+                                            padding:  EdgeInsets.all(6.0),
+                                            decoration: BoxDecoration(
+                                              color: item["weight"] != null && item['weight_out'] != null ? Colors.green[100] : Colors.red[100],
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              item["weight"] != null && item['weight_out'] != null ? Icons.check : Icons.close,
+                                              color: item["weight"] != null && item['weight_out'] != null ? Colors.green : Colors.red,
+                                              size: 24.0, // Increased size
+                                            ),
                                           ),
-                                        ],
-                                      ),
-                                    )
-
-                                    // Expanded(
-                                    //   child: Row(
-                                    //     mainAxisAlignment: MainAxisAlignment.end,
-                                    //     children: [
-                                    //       // Show delete icon if showDelete is true
-                                    //
-                                    //       // Arrow icon
-                                    //       IconButton(
-                                    //         icon: Icon(
-                                    //           item['showDelete']
-                                    //                       .toString()
-                                    //                       .toLowerCase() ==
-                                    //                   'true'
-                                    //               ? Icons.arrow_back_ios
-                                    //               : Icons.arrow_forward_ios,
-                                    //           color: Colors.blue,
-                                    //         ),
-                                    //         onPressed: () {
-                                    //           setState(() {
-                                    //             item['showDelete'] =
-                                    //                 item['showDelete']
-                                    //                             .toString()
-                                    //                             .toLowerCase() ==
-                                    //                         'true'
-                                    //                     ? 'false'
-                                    //                     : 'true';
-                                    //           });
-                                    //         },
-                                    //       ),
-                                    //     ],
-                                    //   ),
-                                    // ),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ),
-                            ),
+                              )
+
+
+                            ],
                           ),
-                        );
-                      },
-                    ),
-                  )
-                : (noflag == true)
-                    ? Container(
-                        height: MediaQuery.of(context).size.height * 0.65,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Center(
-                              child: Text(
-                                "No Data",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 20),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : Container(
-                        height: MediaQuery.of(context).size.height * 0.65,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Center(child: CircularProgressIndicator()),
-                          ],
                         ),
                       ),
+                    ),
+                  );
+                },
+              ),
+            )
+                : (noflag == true)
+                ? Container(
+              height: MediaQuery.of(context).size.height * 0.65,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center(
+                    child: Text(
+                      "No Data",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 20),
+                    ),
+                  ),
+                ],
+              ),
+            )
+                : Container(
+              height: MediaQuery.of(context).size.height * 0.65,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center(child: CircularProgressIndicator()),
+                ],
+              ),
+            ),
           )
         ],
       ),
@@ -754,7 +882,7 @@ dataformater(String dt) {
     return "NA";
   } else {
     DateTime fromdate =
-        DateTime.parse(DateFormat('yyyy-MM-dd HH:mm:ss').parse(dt).toString());
+    DateTime.parse(DateFormat('yyyy-MM-dd HH:mm:ss').parse(dt).toString());
     String parsedfromdate = DateFormat("hh:mma").format(fromdate);
     return parsedfromdate;
   }
@@ -766,8 +894,8 @@ dataformater1(String dt) {
     return "NA";
   } else {
     String parsedfromdate =
-        (NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 0)
-            .format(int.parse(dt)));
+    (NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 0)
+        .format(int.parse(dt)));
     return parsedfromdate;
   }
 }
